@@ -50,6 +50,9 @@ func Names() []string { return styles.Names() }
 // Lines splits code into lines of colored tokens. The lexer is chosen from the
 // path, and the whole body is tokenised at once: a lexer carries state across
 // lines, so a multi-line string highlighted line by line comes apart.
+//
+// A body always has at least one line, empty included, so a caller holding the
+// empty side of a diff can index it.
 func (s *Syntax) Lines(path, code string) [][]Token {
 	h := fnv.New64a()
 	_, _ = h.Write([]byte(path))
@@ -91,6 +94,13 @@ func (s *Syntax) tokenise(path, code string) [][]Token {
 			row = append(row, Token{Text: text, Color: colorOf(s.style.Get(t.Type).Colour)})
 		}
 		out = append(out, row)
+	}
+
+	// Chroma yields no lines at all for an empty body. An empty file is one
+	// empty line, which is what the fallback returns and what a caller walking
+	// a side against its diff rows counts on.
+	if out == nil {
+		out = [][]Token{{}}
 	}
 	return out
 }

@@ -80,6 +80,15 @@ func TestGoldenLines(t *testing.T) {
 			}},
 			24,
 		},
+		// An odd remainder against two-cell runes is where the cut used to come
+		// back a column short of the pane.
+		{
+			"clipped_wide",
+			paint.Line{Kind: paint.Added, New: 12, Tokens: []syntax.Token{
+				{Text: "// 日本語のコメント", Color: theme.RosePineMoon.Faint},
+			}},
+			21,
+		},
 		{
 			"fill_override",
 			paint.Line{Kind: paint.Added, New: 12, Tokens: tokens(), Fill: theme.RosePineMoon.SelectedBackground},

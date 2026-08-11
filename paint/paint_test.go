@@ -178,6 +178,23 @@ func TestARowWiderThanThePaneIsClippedNotWrapped(t *testing.T) {
 	}
 }
 
+// A clipped row is still a row with a background, and it has to reach the pane
+// edge. CJK and emoji are where it stops doing that: the cut lands on a two-cell
+// rune and comes back a column short. Every odd width is a separate case,
+// because whether the remainder is one cell or two decides it.
+func TestAClippedRowWithWideRunesStillFillsTheWidth(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+
+	for _, code := range []string{"日本語のコメントです", "🌱 seedling 🌱 seedling"} {
+		for width := 18; width <= 25; width++ {
+			row := p.Line(paint.Line{Kind: paint.Added, New: 12, Tokens: []syntax.Token{{Text: code}}}, 2, width)
+			if got := lipgloss.Width(row); got != width {
+				t.Errorf("%q at width %d painted %d cells", code, width, got)
+			}
+		}
+	}
+}
+
 // Clip is the primitive both tools truncate with, and it marks either way. A
 // caller that wants short content left alone checks the width itself.
 func TestClipAlwaysMarksTheCut(t *testing.T) {
@@ -193,6 +210,11 @@ func TestClipAlwaysMarksTheCut(t *testing.T) {
 		{"room for the mark alone", "hello", 1, "…"},
 		{"cut", "hello", 3, "he…"},
 		{"content that already fits", "hi", 5, "hi…"},
+		// A two-cell rune cannot half-fill the last column. Unpadded, the result
+		// comes back a column short of the width it was asked for, and a tinted
+		// row stops before the pane edge.
+		{"cut landing on a wide rune", "日本語", 4, "日 …"},
+		{"wide runes cut on the boundary", "日本語", 5, "日本…"},
 	}
 
 	for _, tt := range tests {
@@ -204,9 +226,10 @@ func TestClipAlwaysMarksTheCut(t *testing.T) {
 	}
 }
 
-// The header is a heading over the numbers, so its indent clears both columns
-// and the marker. Left of that it reads as another row of code.
-func TestTheHunkHeaderClearsTheGutterAndTheMarker(t *testing.T) {
+// The header sits over the source it introduces. Asserting only "past the
+// marker" passes with the header parked in the marker's own gap, which is where
+// it sat until this test was tightened.
+func TestTheHunkHeaderStartsAtTheCodeColumn(t *testing.T) {
 	p := paint.Painter{Theme: theme.RosePineMoon}
 
 	for _, widest := range []int{9, 120, 4210} {
@@ -214,10 +237,26 @@ func TestTheHunkHeaderClearsTheGutterAndTheMarker(t *testing.T) {
 		header := xansi.Strip(p.HunkHeader("@@ -1,2 +1,3 @@", gutter, 60))
 		indent := lipgloss.Width(header[:strings.Index(header, "@@")])
 
-		if want := markerColumn(t, p, paint.Line{Kind: paint.Added, New: widest}, gutter); indent <= want {
-			t.Errorf("gutter %d: header starts at column %d, want it past the marker at %d", gutter, indent, want)
+		if want := codeColumn(t, p, gutter); indent != want {
+			t.Errorf("gutter %d: header starts at column %d, want the code column %d", gutter, indent, want)
 		}
 	}
+}
+
+// codeColumn is where the source starts in a painted row, found by painting a
+// token nothing else in the row can contain.
+func codeColumn(t *testing.T, p paint.Painter, gutter int) int {
+	t.Helper()
+
+	plain := xansi.Strip(p.Line(paint.Line{
+		Kind: paint.Added, New: 1, Tokens: []syntax.Token{{Text: "X"}},
+	}, gutter, 60))
+
+	i := strings.Index(plain, "X")
+	if i < 0 {
+		t.Fatalf("no code in %q", plain)
+	}
+	return lipgloss.Width(plain[:i])
 }
 
 func TestAHunkHeaderWiderThanThePaneIsClipped(t *testing.T) {

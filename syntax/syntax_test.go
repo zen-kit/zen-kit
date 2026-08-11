@@ -53,6 +53,24 @@ func TestCodeIsSplitIntoLinesOfColoredTokens(t *testing.T) {
 	}
 }
 
+// A new empty file and the deleted side of a diff both arrive as an empty body.
+// Chroma yields nothing at all for one, so a caller reaching for the first line
+// panics on a body it was handed a line count for.
+func TestAnEmptyBodyIsOneEmptyLine(t *testing.T) {
+	s := colorizer(t)
+
+	for _, path := range []string{"a.go", "a.txt", "no-extension"} {
+		lines := s.Lines(path, "")
+		if len(lines) != 1 {
+			t.Errorf("%s: lines = %d, want 1", path, len(lines))
+			continue
+		}
+		if got := text(lines[0]); got != "" {
+			t.Errorf("%s: first line = %q, want empty", path, got)
+		}
+	}
+}
+
 // A keyword and a number are different colors in every style worth using. If
 // the tokens come back all one color the lexer never ran.
 func TestTokensCarryDifferentColorsWithinALine(t *testing.T) {

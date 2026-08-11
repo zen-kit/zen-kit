@@ -34,7 +34,24 @@ func Clip(content string, width int, mark lipgloss.Style) string {
 	case width == 1:
 		return mark.Render("…")
 	}
-	return lipgloss.NewStyle().MaxWidth(width-1).Render(content) + mark.Render("…")
+	cut := lipgloss.NewStyle().MaxWidth(width - 1).Render(content)
+
+	// A two-cell rune cannot half-fill the last column, so a cut landing on one
+	// comes back a column short and a tinted row stops before the pane edge. The
+	// gap goes in front of the mark, keeping the mark at the edge.
+	if lipgloss.Width(content) > width-1 {
+		if gap := width - 1 - lipgloss.Width(cut); gap > 0 {
+			cut += mark.Render(strings.Repeat(" ", gap))
+		}
+	}
+	return cut + mark.Render("…")
+}
+
+// codeColumn is where the source starts in a painted row: a leading space, both
+// number columns with a space after each, the marker, and the space after it.
+// HunkHeader indents to it, so a heading sits over the code it introduces.
+func codeColumn(gutter int) int {
+	return gutter*2 + 5
 }
 
 // clipTo is Clip for a row that may already fit, since Clip marks either way.

@@ -98,10 +98,10 @@ func (p Painter) Line(l Line, gutter, width int) string {
 	return row
 }
 
-// HunkHeader is the @@ line, set in to the marker column so it reads as a
-// heading over the numbers below it rather than another row of code.
+// HunkHeader is the @@ line, indented to the code column so it sits over the
+// source it introduces rather than in the marker's gap.
 func (p Painter) HunkHeader(text string, gutter, width int) string {
-	row := strings.Repeat(" ", gutter*2+4) +
+	row := strings.Repeat(" ", codeColumn(gutter)) +
 		lipgloss.NewStyle().Foreground(p.Theme.Secondary).Render(text)
 	return clipTo(row, width, lipgloss.NewStyle().Foreground(p.Theme.Faint))
 }
