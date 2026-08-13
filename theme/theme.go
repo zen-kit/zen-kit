@@ -21,10 +21,13 @@ type Theme struct {
 	// it. Empty falls back to Chroma's own default.
 	Syntax string
 
-	// Text, named for the roles Rosé Pine ships rather than for a rank, so a
-	// style reads the same here as it does in the palette it came from. Subtle
-	// is text that is still meant to be read; Muted is text that is there to be
-	// looked past.
+	// Text, named for weight rather than rank, so a style says how loud it is
+	// instead of where it came in a list. Subtle is text still meant to be
+	// read; Muted is text there to be looked past.
+	//
+	// Text, Subtle and Muted are Rosé Pine's own roles at its own values.
+	// Accent is this UI's name for the one color it highlights with, which in
+	// that palette is iris.
 	Text     color.Color
 	Accent   color.Color
 	Subtle   color.Color
@@ -79,8 +82,9 @@ func (t Theme) BorderMutedOrSubtle() color.Color {
 	return t.BorderSubtleOrBorder()
 }
 
-// RosePineMoon is the default. Every value is Rosé Pine Moon's own, so the
-// palette's names and these fields describe the same colors.
+// RosePineMoon is the default. The text, semantic and border colors are Rosé
+// Pine Moon's own values. The two diff tints are not: the palette has no role
+// for a changed row, so they are mixed here.
 var RosePineMoon = Theme{
 	Name:               "rose-pine-moon",
 	Syntax:             "rose-pine-moon",
