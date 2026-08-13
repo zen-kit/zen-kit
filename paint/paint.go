@@ -103,8 +103,9 @@ type Header struct {
 	Text string
 
 	// Marker goes in the column Line puts + and − in, so a mark on a heading
-	// lines up with the change marks under it. "" leaves the column blank, and
-	// anything wider than one cell puts the text out of step with the code.
+	// lines up with the change marks under it. "" leaves the column blank. A
+	// two-cell marker takes the space after it and anything wider is clipped,
+	// so the text starts at the code column whatever the caller passes.
 	Marker string
 
 	// Fill is the row's background, and nil paints none. It is the caller's
@@ -125,9 +126,10 @@ func (p Painter) HunkHeader(h Header, gutter, width int) string {
 
 	row := base.Render(strings.Repeat(" ", markerColumn(gutter)))
 	if h.Marker == "" {
-		row += base.Render("  ")
+		row += base.Render(strings.Repeat(" ", markerSlot))
 	} else {
-		row += accent.Render(h.Marker) + base.Render(" ")
+		mark := lipgloss.NewStyle().MaxWidth(markerSlot).Render(h.Marker)
+		row += accent.Render(mark) + base.Render(strings.Repeat(" ", markerSlot-lipgloss.Width(mark)))
 	}
 	row += accent.Render(h.Text)
 

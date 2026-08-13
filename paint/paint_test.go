@@ -235,7 +235,9 @@ func TestClipAlwaysMarksTheCut(t *testing.T) {
 func TestTheHunkHeaderStartsAtTheCodeColumn(t *testing.T) {
 	p := paint.Painter{Theme: theme.RosePineMoon}
 
-	for _, marker := range []string{"", "▸"} {
+	// An emoji cursor is two cells. It takes the space after the marker rather
+	// than a column of its own, or every row under the heading reads shifted.
+	for _, marker := range []string{"", "▸", "🔵"} {
 		for _, widest := range []int{9, 120, 4210} {
 			gutter := paint.Gutter(widest)
 			header := xansi.Strip(p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: marker}, gutter, 60))
@@ -333,10 +335,18 @@ func TestAFilledHeaderWiderThanThePaneKeepsItsFillToTheEdge(t *testing.T) {
 		t.Errorf("header width = %d, want 24", got)
 	}
 
-	// The mark is the last thing on the row, so the fill in front of it is the
-	// one that has to survive the cut.
-	tail := header[strings.LastIndex(header, bgSeq(theme.RosePineMoon.SelectedBackground)):]
-	if !strings.Contains(tail, "…") {
+	// The mark is rendered as its own run, so the escape opening it is the one
+	// that has to carry the fill. Slicing back from the last background instead
+	// lands in the text's run, which keeps the mark behind it either way.
+	cut := strings.LastIndex(header, "…")
+	if cut < 0 {
+		t.Fatalf("the cut is not marked: %q", header)
+	}
+	open := strings.LastIndex(header[:cut], "\x1b[")
+	if open < 0 {
+		t.Fatalf("the cut mark carries no style: %q", header)
+	}
+	if !strings.Contains(header[open:cut], bgSeq(theme.RosePineMoon.SelectedBackground)) {
 		t.Errorf("the cut mark lost the fill: %q", header)
 	}
 }

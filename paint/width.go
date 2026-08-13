@@ -54,10 +54,15 @@ func codeColumn(gutter int) int {
 	return gutter*2 + 5
 }
 
+// markerSlot is the marker and the space after it. A heading holds its own
+// marker to the pair whatever the caller passes, so a two-cell one eats the
+// space rather than pushing the text past codeColumn.
+const markerSlot = 2
+
 // markerColumn is where + and − sit, which is the two columns before the code.
 // A heading's own marker goes there so the two line up.
 func markerColumn(gutter int) int {
-	return codeColumn(gutter) - 2
+	return codeColumn(gutter) - markerSlot
 }
 
 // number right-aligns a line number, or holds the column open on the side a line
