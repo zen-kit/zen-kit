@@ -119,7 +119,7 @@ func TestFillBeatsTheKindTint(t *testing.T) {
 // A theme leaving a surface nil means "leave the terminal's own showing", and
 // handing that to Lipgloss is what breaks a transparent background.
 func TestARowTakesNoBackgroundFromAThemeThatDefinesNone(t *testing.T) {
-	bare := theme.Theme{Name: "bare", Primary: theme.RosePineMoon.Primary, Faint: theme.RosePineMoon.Faint}
+	bare := theme.Theme{Name: "bare", Text: theme.RosePineMoon.Text, Subtle: theme.RosePineMoon.Subtle}
 	p := paint.Painter{Theme: bare}
 	row := p.Line(paint.Line{Kind: paint.Added, New: 12, Tokens: []syntax.Token{{Text: "n = 4"}}}, 2, 40)
 
