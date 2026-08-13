@@ -121,5 +121,15 @@ func TestGoldenOneSided(t *testing.T) {
 }
 
 func TestGoldenHunkHeader(t *testing.T) {
-	golden(t, "hunk_header", painter().HunkHeader("@@ -11,4 +12,6 @@ func Paint()", paint.Gutter(1235), 40))
+	golden(t, "hunk_header", painter().HunkHeader(paint.Header{Text: "@@ -11,4 +12,6 @@ func Paint()"}, paint.Gutter(1235), 40))
+}
+
+// The heading a cursor is on: filled to the edge, with the mark in the column
+// the change marks under it use.
+func TestGoldenHunkHeaderMarked(t *testing.T) {
+	golden(t, "hunk_header_marked", painter().HunkHeader(paint.Header{
+		Text:   "@@ -11,4 +12,6 @@ func Paint()",
+		Marker: "▸",
+		Fill:   theme.RosePineMoon.SelectedBackground,
+	}, paint.Gutter(1235), 40))
 }
