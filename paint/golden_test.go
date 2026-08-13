@@ -44,8 +44,8 @@ func golden(t *testing.T, name, got string) {
 // what the painter did and not what a lexer version thought of a line.
 func tokens() []syntax.Token {
 	return []syntax.Token{
-		{Text: "const ", Color: theme.RosePineMoon.Secondary},
-		{Text: "n", Color: theme.RosePineMoon.Primary},
+		{Text: "const ", Color: theme.RosePineMoon.Accent},
+		{Text: "n", Color: theme.RosePineMoon.Text},
 		{Text: " = "},
 		{Text: "4", Color: theme.RosePineMoon.Warning},
 	}
@@ -68,7 +68,7 @@ func TestGoldenLines(t *testing.T) {
 			"tabs",
 			paint.Line{Kind: paint.Context, Old: 11, New: 12, Tokens: []syntax.Token{
 				{Text: "\t"},
-				{Text: "return", Color: theme.RosePineMoon.Secondary},
+				{Text: "return", Color: theme.RosePineMoon.Accent},
 				{Text: "\tnil"},
 			}},
 			40,
@@ -76,7 +76,7 @@ func TestGoldenLines(t *testing.T) {
 		{
 			"clipped",
 			paint.Line{Kind: paint.Added, New: 12, Tokens: []syntax.Token{
-				{Text: "if err != nil { return fmt.Errorf(\"painting: %w\", err) }", Color: theme.RosePineMoon.Primary},
+				{Text: "if err != nil { return fmt.Errorf(\"painting: %w\", err) }", Color: theme.RosePineMoon.Text},
 			}},
 			24,
 		},
@@ -85,7 +85,7 @@ func TestGoldenLines(t *testing.T) {
 		{
 			"clipped_wide",
 			paint.Line{Kind: paint.Added, New: 12, Tokens: []syntax.Token{
-				{Text: "// 日本語のコメント", Color: theme.RosePineMoon.Faint},
+				{Text: "// 日本語のコメント", Color: theme.RosePineMoon.Subtle},
 			}},
 			21,
 		},

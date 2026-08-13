@@ -83,7 +83,7 @@ func main() {
 	oldSide := s.Lines("paint.go", source(paint.Removed))
 	newSide := s.Lines("paint.go", source(paint.Added))
 
-	out := []string{lipgloss.NewStyle().Foreground(t.Faint).
+	out := []string{lipgloss.NewStyle().Foreground(t.Subtle).
 		Render(fmt.Sprintf("theme %s, pane %d columns, gutter %d", t.Name, width, gutter))}
 
 	oldAt, newAt := 0, 0

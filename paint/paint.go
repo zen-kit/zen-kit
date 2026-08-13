@@ -58,7 +58,7 @@ type Painter struct {
 // Anything wider than the pane is clipped rather than wrapped: a wrapped row
 // puts its tail under the gutter and every row below it out of step.
 func (p Painter) Line(l Line, gutter, width int) string {
-	marker, c := " ", p.Theme.Faint
+	marker, c := " ", p.Theme.Subtle
 	var tint color.Color
 
 	switch l.Kind {
@@ -73,7 +73,7 @@ func (p Painter) Line(l Line, gutter, width int) string {
 
 	base := background(lipgloss.NewStyle(), tint)
 	kind := base.Foreground(c)
-	faint := base.Foreground(p.Theme.Faint)
+	faint := base.Foreground(p.Theme.Subtle)
 
 	oldNum, newNum := faint, faint
 	switch l.Kind {
@@ -102,8 +102,8 @@ func (p Painter) Line(l Line, gutter, width int) string {
 // source it introduces rather than in the marker's gap.
 func (p Painter) HunkHeader(text string, gutter, width int) string {
 	row := strings.Repeat(" ", codeColumn(gutter)) +
-		lipgloss.NewStyle().Foreground(p.Theme.Secondary).Render(text)
-	return clipTo(row, width, lipgloss.NewStyle().Foreground(p.Theme.Faint))
+		lipgloss.NewStyle().Foreground(p.Theme.Accent).Render(text)
+	return clipTo(row, width, lipgloss.NewStyle().Foreground(p.Theme.Subtle))
 }
 
 // code renders one row's tokens over the style the row is painted in. Every
