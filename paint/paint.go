@@ -98,12 +98,45 @@ func (p Painter) Line(l Line, gutter, width int) string {
 	return row
 }
 
+// Header is the @@ line ready to paint.
+type Header struct {
+	Text string
+
+	// Marker goes in the column Line puts + and − in, so a mark on a heading
+	// lines up with the change marks under it. "" leaves the column blank, and
+	// anything wider than one cell puts the text out of step with the code.
+	Marker string
+
+	// Fill is the row's background, and nil paints none. It is the caller's
+	// state the same way Line.Fill is: which heading a cursor is on is not
+	// something this package can know.
+	Fill color.Color
+}
+
 // HunkHeader is the @@ line, indented to the code column so it sits over the
 // source it introduces rather than in the marker's gap.
-func (p Painter) HunkHeader(text string, gutter, width int) string {
-	row := strings.Repeat(" ", codeColumn(gutter)) +
-		lipgloss.NewStyle().Foreground(p.Theme.Accent).Render(text)
-	return clipTo(row, width, lipgloss.NewStyle().Foreground(p.Theme.Subtle))
+//
+// A filled heading runs its background out to the full width the way a tinted
+// Line does, so the row reads as one block rather than as text with a coloured
+// box behind it.
+func (p Painter) HunkHeader(h Header, gutter, width int) string {
+	base := background(lipgloss.NewStyle(), h.Fill)
+	accent := base.Foreground(p.Theme.Accent)
+
+	row := base.Render(strings.Repeat(" ", markerColumn(gutter)))
+	if h.Marker == "" {
+		row += base.Render("  ")
+	} else {
+		row += accent.Render(h.Marker) + base.Render(" ")
+	}
+	row += accent.Render(h.Text)
+
+	if w := lipgloss.Width(row); w > width {
+		return Clip(row, width, base.Foreground(p.Theme.Subtle))
+	} else if h.Fill != nil {
+		row += base.Render(strings.Repeat(" ", width-w))
+	}
+	return row
 }
 
 // code renders one row's tokens over the style the row is painted in. Every

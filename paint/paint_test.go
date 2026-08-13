@@ -229,17 +229,65 @@ func TestClipAlwaysMarksTheCut(t *testing.T) {
 // The header sits over the source it introduces. Asserting only "past the
 // marker" passes with the header parked in the marker's own gap, which is where
 // it sat until this test was tightened.
+//
+// A marker holds its own column, so a marked heading and a bare one start their
+// text in the same place.
 func TestTheHunkHeaderStartsAtTheCodeColumn(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+
+	for _, marker := range []string{"", "▸"} {
+		for _, widest := range []int{9, 120, 4210} {
+			gutter := paint.Gutter(widest)
+			header := xansi.Strip(p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: marker}, gutter, 60))
+			indent := lipgloss.Width(header[:strings.Index(header, "@@")])
+
+			if want := codeColumn(t, p, gutter); indent != want {
+				t.Errorf("gutter %d, marker %q: header starts at column %d, want the code column %d",
+					gutter, marker, indent, want)
+			}
+		}
+	}
+}
+
+// A heading's marker goes in the column Line puts + and − in, so a mark on a
+// hunk lines up with the change marks under it.
+func TestAHeadersMarkerSitsInTheMarkerColumn(t *testing.T) {
 	p := paint.Painter{Theme: theme.RosePineMoon}
 
 	for _, widest := range []int{9, 120, 4210} {
 		gutter := paint.Gutter(widest)
-		header := xansi.Strip(p.HunkHeader("@@ -1,2 +1,3 @@", gutter, 60))
-		indent := lipgloss.Width(header[:strings.Index(header, "@@")])
+		header := xansi.Strip(p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: "▸"}, gutter, 60))
 
-		if want := codeColumn(t, p, gutter); indent != want {
-			t.Errorf("gutter %d: header starts at column %d, want the code column %d", gutter, indent, want)
+		at := lipgloss.Width(header[:strings.Index(header, "▸")])
+		if want := markerColumn(t, p, paint.Line{Kind: paint.Added, New: 1}, gutter); at != want {
+			t.Errorf("gutter %d: the marker sits at column %d, want the marker column %d", gutter, at, want)
 		}
+	}
+}
+
+// A filled heading is a block the same as a tinted row, and every styled run
+// ends in a reset that clears the background with it.
+func TestAFilledHeaderIsPaintedToTheFullWidth(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+	header := p.HunkHeader(paint.Header{
+		Text: "@@ -11,4 +12,6 @@", Fill: theme.RosePineMoon.SelectedBackground,
+	}, 2, 40)
+
+	if got := lipgloss.Width(header); got != 40 {
+		t.Errorf("header width = %d, want the full 40", got)
+	}
+	if !strings.Contains(header, bgSeq(theme.RosePineMoon.SelectedBackground)) {
+		t.Error("the fill is not on the heading")
+	}
+}
+
+// A heading with no fill has no background to run out, the same as a context
+// row, and padding it would hand the caller trailing cells to reason about.
+func TestAHeaderWithNoFillIsLeftShort(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+
+	if got := lipgloss.Width(p.HunkHeader(paint.Header{Text: "@@ -11,4 +12,6 @@"}, 2, 40)); got >= 40 {
+		t.Errorf("header width = %d, want it to stop at the text", got)
 	}
 }
 
@@ -261,13 +309,35 @@ func codeColumn(t *testing.T, p paint.Painter, gutter int) int {
 
 func TestAHunkHeaderWiderThanThePaneIsClipped(t *testing.T) {
 	p := paint.Painter{Theme: theme.RosePineMoon}
-	header := p.HunkHeader("@@ -1,200 +1,240 @@ func AVeryLongEnclosingSymbolName()", 2, 24)
+	header := p.HunkHeader(paint.Header{Text: "@@ -1,200 +1,240 @@ func AVeryLongEnclosingSymbolName()"}, 2, 24)
 
 	if got := lipgloss.Width(header); got != 24 {
 		t.Errorf("header width = %d, want 24", got)
 	}
 	if !strings.Contains(xansi.Strip(header), "…") {
 		t.Error("the cut is not marked")
+	}
+}
+
+// The cut takes the fill with it, or the block stops one cell short of the pane
+// edge and the row reads ragged where it was clipped.
+func TestAFilledHeaderWiderThanThePaneKeepsItsFillToTheEdge(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+	header := p.HunkHeader(paint.Header{
+		Text:   "@@ -1,200 +1,240 @@ func AVeryLongEnclosingSymbolName()",
+		Marker: "▸",
+		Fill:   theme.RosePineMoon.SelectedBackground,
+	}, 2, 24)
+
+	if got := lipgloss.Width(header); got != 24 {
+		t.Errorf("header width = %d, want 24", got)
+	}
+
+	// The mark is the last thing on the row, so the fill in front of it is the
+	// one that has to survive the cut.
+	tail := header[strings.LastIndex(header, bgSeq(theme.RosePineMoon.SelectedBackground)):]
+	if !strings.Contains(tail, "…") {
+		t.Errorf("the cut mark lost the fill: %q", header)
 	}
 }
 

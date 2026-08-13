@@ -30,6 +30,10 @@ type row struct {
 
 type hunk struct {
 	Header string
+
+	// Cursor marks the hunk a caller has landed on, which is what the header's
+	// own Marker and Fill are for.
+	Cursor bool
 	Rows   []row
 }
 
@@ -38,6 +42,7 @@ type hunk struct {
 var hunks = []hunk{
 	{
 		Header: "@@ -41,8 +41,9 @@ func (p Painter) Line",
+		Cursor: true,
 		Rows: []row{
 			{Kind: paint.Context, Old: 41, New: 41, Text: "// Line is one row: numbers, marker, source."},
 			{Kind: paint.Removed, Old: 42, Text: "func (p Painter) Line(l Line, width int) string {"},
@@ -88,7 +93,11 @@ func main() {
 
 	oldAt, newAt := 0, 0
 	for _, h := range hunks {
-		out = append(out, p.HunkHeader(h.Header, gutter, width))
+		head := paint.Header{Text: h.Header}
+		if h.Cursor {
+			head.Marker, head.Fill = "▸", t.SelectedBackground
+		}
+		out = append(out, p.HunkHeader(head, gutter, width))
 
 		for _, r := range h.Rows {
 			l := paint.Line{Kind: r.Kind, Old: r.Old, New: r.New}

@@ -54,12 +54,10 @@ func codeColumn(gutter int) int {
 	return gutter*2 + 5
 }
 
-// clipTo is Clip for a row that may already fit, since Clip marks either way.
-func clipTo(row string, width int, mark lipgloss.Style) string {
-	if lipgloss.Width(row) <= width {
-		return row
-	}
-	return Clip(row, width, mark)
+// markerColumn is where + and − sit, which is the two columns before the code.
+// A heading's own marker goes there so the two line up.
+func markerColumn(gutter int) int {
+	return codeColumn(gutter) - 2
 }
 
 // number right-aligns a line number, or holds the column open on the side a line
