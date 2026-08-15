@@ -47,22 +47,20 @@ func Clip(content string, width int, mark lipgloss.Style) string {
 	return cut + mark.Render("…")
 }
 
-// codeColumn is where the source starts in a painted row: a leading space, both
-// number columns with a space after each, the marker, and the space after it.
-// HunkHeader indents to it, so a heading sits over the code it introduces.
-func codeColumn(gutter int) int {
+// CodeColumn is where the source starts in a painted row, past both number
+// columns and the marker. A caller hanging its own block under a row indents to it.
+func CodeColumn(gutter int) int {
 	return gutter*2 + 5
 }
 
-// markerSlot is the marker and the space after it. A heading holds its own
-// marker to the pair whatever the caller passes, so a two-cell one eats the
-// space rather than pushing the text past codeColumn.
+// markerSlot is the marker and the space after it. A two-cell marker eats that
+// space rather than pushing a heading's text past CodeColumn.
 const markerSlot = 2
 
 // markerColumn is where + and − sit, which is the two columns before the code.
 // A heading's own marker goes there so the two line up.
 func markerColumn(gutter int) int {
-	return codeColumn(gutter) - markerSlot
+	return CodeColumn(gutter) - markerSlot
 }
 
 // number right-aligns a line number, or holds the column open on the side a line
