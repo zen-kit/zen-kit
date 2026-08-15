@@ -32,8 +32,9 @@ type hunk struct {
 	Header string
 
 	// Cursor marks the hunk a caller has landed on, which is what the header's
-	// own Marker and Fill are for.
+	// own Marker and Fill are for. Badged is the state beside it.
 	Cursor bool
+	Badged bool
 	Rows   []row
 }
 
@@ -61,6 +62,7 @@ var hunks = []hunk{
 	},
 	{
 		Header: "@@ -1229,3 +1230,3 @@ func Gutter(widest int) int",
+		Badged: true,
 		Rows: []row{
 			{Kind: paint.Context, Old: 1229, New: 1230, Text: "func Gutter(widest int) int {"},
 			{Kind: paint.Removed, Old: 1230, Text: "\treturn len(strconv.Itoa(widest))"},
@@ -96,6 +98,9 @@ func main() {
 		head := paint.Header{Text: h.Header}
 		if h.Cursor {
 			head.Marker, head.Fill = "▸", t.SelectedBackground
+		}
+		if h.Badged {
+			head.Badge = "●"
 		}
 		out = append(out, p.HunkHeader(head, gutter, width))
 

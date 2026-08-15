@@ -108,30 +108,24 @@ type Header struct {
 	// so the text starts at the code column whatever the caller passes.
 	Marker string
 
+	// Badge is a second glyph, left of the marker, for a state the heading
+	// carries whether or not the cursor is on it. It takes blank indent.
+	Badge string
+
 	// Fill is the row's background, and nil paints none. It is the caller's
-	// state the same way Line.Fill is: which heading a cursor is on is not
-	// something this package can know.
+	// state the same way Line.Fill is.
 	Fill color.Color
 }
 
 // HunkHeader is the @@ line, indented to the code column so it sits over the
-// source it introduces rather than in the marker's gap.
-//
-// A filled heading runs its background out to the full width the way a tinted
-// Line does, so the row reads as one block rather than as text with a coloured
-// box behind it.
+// source it introduces. A fill runs its background out to the full width.
 func (p Painter) HunkHeader(h Header, gutter, width int) string {
 	base := background(lipgloss.NewStyle(), h.Fill)
 	accent := base.Foreground(p.Theme.Accent)
 
-	row := base.Render(strings.Repeat(" ", markerColumn(gutter)))
-	if h.Marker == "" {
-		row += base.Render(strings.Repeat(" ", markerSlot))
-	} else {
-		mark := lipgloss.NewStyle().MaxWidth(markerSlot).Render(h.Marker)
-		row += accent.Render(mark) + base.Render(strings.Repeat(" ", markerSlot-lipgloss.Width(mark)))
-	}
-	row += accent.Render(h.Text)
+	row := base.Render(strings.Repeat(" ", markerColumn(gutter)-markerSlot)) +
+		slot(h.Badge, base, accent) + slot(h.Marker, base, accent) +
+		accent.Render(h.Text)
 
 	if w := lipgloss.Width(row); w > width {
 		return Clip(row, width, base.Foreground(p.Theme.Subtle))
@@ -139,6 +133,16 @@ func (p Painter) HunkHeader(h Header, gutter, width int) string {
 		row += base.Render(strings.Repeat(" ", width-w))
 	}
 	return row
+}
+
+// slot renders one glyph in a fixed pair of columns, blank when there is none.
+// A wider glyph eats the space after it rather than pushing the text along.
+func slot(glyph string, base, on lipgloss.Style) string {
+	if glyph == "" {
+		return base.Render(strings.Repeat(" ", markerSlot))
+	}
+	g := lipgloss.NewStyle().MaxWidth(markerSlot).Render(glyph)
+	return on.Render(g) + base.Render(strings.Repeat(" ", markerSlot-lipgloss.Width(g)))
 }
 
 // code renders one row's tokens over the style the row is painted in. Every
