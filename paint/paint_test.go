@@ -235,18 +235,46 @@ func TestClipAlwaysMarksTheCut(t *testing.T) {
 func TestTheHunkHeaderStartsAtTheCodeColumn(t *testing.T) {
 	p := paint.Painter{Theme: theme.RosePineMoon}
 
-	// An emoji cursor is two cells. It takes the space after the marker rather
+	// An emoji is two cells. Each slot takes the space after its glyph rather
 	// than a column of its own, or every row under the heading reads shifted.
 	for _, marker := range []string{"", "▸", "🔵"} {
-		for _, widest := range []int{9, 120, 4210} {
-			gutter := paint.Gutter(widest)
-			header := xansi.Strip(p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: marker}, gutter, 60))
-			indent := lipgloss.Width(header[:strings.Index(header, "@@")])
+		for _, badge := range []string{"", "●", "🔵"} {
+			for _, widest := range []int{9, 120, 4210} {
+				gutter := paint.Gutter(widest)
+				header := xansi.Strip(p.HunkHeader(
+					paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: marker, Badge: badge}, gutter, 60))
+				indent := lipgloss.Width(header[:strings.Index(header, "@@")])
 
-			if want := codeColumn(t, p, gutter); indent != want {
-				t.Errorf("gutter %d, marker %q: header starts at column %d, want the code column %d",
-					gutter, marker, indent, want)
+				if want := codeColumn(t, p, gutter); indent != want {
+					t.Errorf("gutter %d, marker %q, badge %q: header starts at column %d, want the code column %d",
+						gutter, marker, badge, indent, want)
+				}
 			}
+		}
+	}
+}
+
+// The badge sits in the two blank columns before the marker, so a heading says
+// what the cursor is on and what has been read without moving its text.
+func TestABadgeSitsLeftOfTheMarker(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+
+	for _, widest := range []int{9, 120, 4210} {
+		gutter := paint.Gutter(widest)
+		header := xansi.Strip(p.HunkHeader(
+			paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: "▸", Badge: "●"}, gutter, 60))
+
+		badge, mark := strings.Index(header, "●"), strings.Index(header, "▸")
+		if badge < 0 || mark < 0 {
+			t.Fatalf("gutter %d: heading is missing a glyph: %q", gutter, header)
+		}
+		if badge > mark {
+			t.Errorf("gutter %d: want the badge before the marker, got %q", gutter, header)
+		}
+
+		at := lipgloss.Width(header[:badge])
+		if want := markerColumn(t, p, paint.Line{Kind: paint.Added, New: 1}, gutter) - 2; at != want {
+			t.Errorf("gutter %d: the badge sits at column %d, want %d", gutter, at, want)
 		}
 	}
 }

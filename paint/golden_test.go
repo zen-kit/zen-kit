@@ -133,3 +133,13 @@ func TestGoldenHunkHeaderMarked(t *testing.T) {
 		Fill:   theme.RosePineMoon.SelectedBackground,
 	}, paint.Gutter(1235), 40))
 }
+
+// Both glyphs at once, which is a cursor on a heading that carries a state.
+func TestGoldenHunkHeaderBadged(t *testing.T) {
+	golden(t, "hunk_header_badged", painter().HunkHeader(paint.Header{
+		Text:   "@@ -11,4 +12,6 @@ func Paint()",
+		Marker: "▸",
+		Badge:  "●",
+		Fill:   theme.RosePineMoon.SelectedBackground,
+	}, paint.Gutter(1235), 40))
+}
