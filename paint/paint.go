@@ -112,6 +112,10 @@ type Header struct {
 	// carries whether or not the cursor is on it. It takes blank indent.
 	Badge string
 
+	// BadgeColor paints the badge, and nil paints it in Accent. A ladder of
+	// states needs more than one weight; a cursor is one thing at one weight.
+	BadgeColor color.Color
+
 	// Fill is the row's background, and nil paints none. It is the caller's
 	// state the same way Line.Fill is.
 	Fill color.Color
@@ -123,8 +127,13 @@ func (p Painter) HunkHeader(h Header, gutter, width int) string {
 	base := background(lipgloss.NewStyle(), h.Fill)
 	accent := base.Foreground(p.Theme.Accent)
 
+	badge := accent
+	if h.BadgeColor != nil {
+		badge = base.Foreground(h.BadgeColor)
+	}
+
 	row := base.Render(strings.Repeat(" ", markerColumn(gutter)-markerSlot)) +
-		slot(h.Badge, base, accent) + slot(h.Marker, base, accent) +
+		slot(h.Badge, base, badge) + slot(h.Marker, base, accent) +
 		accent.Render(h.Text)
 
 	if w := lipgloss.Width(row); w > width {

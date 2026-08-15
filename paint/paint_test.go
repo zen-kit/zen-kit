@@ -254,6 +254,30 @@ func TestTheHunkHeaderStartsAtTheCodeColumn(t *testing.T) {
 	}
 }
 
+// A badge takes a colour of its own, so a caller can run a ladder of states
+// where the quiet end is quiet. nil keeps the marker's accent.
+func TestABadgeTakesItsOwnColour(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+	gutter := paint.Gutter(9)
+
+	// The text is already accent, so subtle appearing at all is the badge and
+	// nothing else. That is what makes either direction here worth asserting.
+	plain := p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Badge: "○"}, gutter, 60)
+	if strings.Contains(plain, fgSeq(theme.RosePineMoon.Subtle)) {
+		t.Errorf("a badge with no colour took one anyway: %q", plain)
+	}
+
+	own := p.HunkHeader(paint.Header{
+		Text: "@@ -1,2 +1,3 @@", Badge: "○", BadgeColor: theme.RosePineMoon.Subtle,
+	}, gutter, 60)
+	if !strings.Contains(own, fgSeq(theme.RosePineMoon.Subtle)) {
+		t.Errorf("the badge does not carry its own colour: %q", own)
+	}
+	if !strings.Contains(xansi.Strip(own), "○") {
+		t.Errorf("the badge is missing: %q", own)
+	}
+}
+
 // The badge sits in the two blank columns before the marker, so a heading says
 // what the cursor is on and what has been read without moving its text.
 func TestABadgeSitsLeftOfTheMarker(t *testing.T) {
@@ -402,4 +426,9 @@ func TestRealChromaTokensPaintOverTheRowsBackground(t *testing.T) {
 func bgSeq(c color.Color) string {
 	r, g, b, _ := c.RGBA()
 	return fmt.Sprintf("48;2;%d;%d;%d", r>>8, g>>8, b>>8)
+}
+
+func fgSeq(c color.Color) string {
+	r, g, b, _ := c.RGBA()
+	return fmt.Sprintf("38;2;%d;%d;%d", r>>8, g>>8, b>>8)
 }

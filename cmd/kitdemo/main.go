@@ -99,8 +99,9 @@ func main() {
 		if h.Cursor {
 			head.Marker, head.Fill = "▸", t.SelectedBackground
 		}
+		head.Badge, head.BadgeColor = "○", t.Subtle
 		if h.Badged {
-			head.Badge = "●"
+			head.Badge, head.BadgeColor = "●", t.Accent
 		}
 		out = append(out, p.HunkHeader(head, gutter, width))
 
