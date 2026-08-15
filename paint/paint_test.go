@@ -56,6 +56,29 @@ func TestEveryRowIsTheSameWidthUpToTheGutterWhateverTheNumber(t *testing.T) {
 	}
 }
 
+// A caller indents its own block to CodeColumn, so the number it is handed has
+// to be where Line actually puts the source rather than a second guess at it.
+func TestCodeColumnIsWhereTheSourceStarts(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+	const code = "n = 4"
+
+	for _, widest := range []int{9, 120, 4210, 42100} {
+		gutter := paint.Gutter(widest)
+		row := xansi.Strip(p.Line(
+			paint.Line{Kind: paint.Context, Old: widest, New: widest, Tokens: []syntax.Token{{Text: code}}},
+			gutter, 60))
+
+		i := strings.Index(row, code)
+		if i < 0 {
+			t.Fatalf("gutter %d: no source in %q", gutter, row)
+		}
+		if at := lipgloss.Width(row[:i]); at != paint.CodeColumn(gutter) {
+			t.Errorf("gutter %d: the source starts at column %d, CodeColumn says %d",
+				gutter, at, paint.CodeColumn(gutter))
+		}
+	}
+}
+
 // markerColumn is where the +/− lands once the escapes are stripped.
 func markerColumn(t *testing.T, p paint.Painter, l paint.Line, gutter int) int {
 	t.Helper()
