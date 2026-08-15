@@ -278,6 +278,33 @@ func TestABadgeTakesItsOwnColour(t *testing.T) {
 	}
 }
 
+// A heading the reader is not in is dimmed, so the column says which one they
+// are in rather than only which hunk is which.
+func TestAHeaderTakesItsOwnTextColour(t *testing.T) {
+	p := paint.Painter{Theme: theme.RosePineMoon}
+	gutter := paint.Gutter(9)
+
+	plain := p.HunkHeader(paint.Header{Text: "@@ -1,2 +1,3 @@", Marker: "\u25b8"}, gutter, 60)
+	if !strings.Contains(plain, fgSeq(theme.RosePineMoon.Accent)) {
+		t.Errorf("a header with no colour of its own is not accent: %q", plain)
+	}
+
+	// The marker goes with the text. A lit caret on a dimmed line reads as two
+	// things disagreeing about whether the reader is here.
+	own := p.HunkHeader(paint.Header{
+		Text: "@@ -1,2 +1,3 @@", Marker: "\u25b8", TextColor: theme.RosePineMoon.Muted,
+	}, gutter, 60)
+	if strings.Contains(own, fgSeq(theme.RosePineMoon.Accent)) {
+		t.Errorf("a dimmed header still paints accent somewhere: %q", own)
+	}
+	if !strings.Contains(own, fgSeq(theme.RosePineMoon.Muted)) {
+		t.Errorf("the header does not carry its own colour: %q", own)
+	}
+	if !strings.Contains(xansi.Strip(own), "@@ -1,2 +1,3 @@") {
+		t.Errorf("the text is missing: %q", own)
+	}
+}
+
 // The badge sits in the two blank columns before the marker, so a heading says
 // what the cursor is on and what has been read without moving its text.
 func TestABadgeSitsLeftOfTheMarker(t *testing.T) {
