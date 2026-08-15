@@ -116,6 +116,10 @@ type Header struct {
 	// states needs more than one weight; a cursor is one thing at one weight.
 	BadgeColor color.Color
 
+	// TextColor paints the @@ line and the marker, nil paints both Accent. A
+	// column of headings at one weight cannot say which one the reader is in.
+	TextColor color.Color
+
 	// Fill is the row's background, and nil paints none. It is the caller's
 	// state the same way Line.Fill is.
 	Fill color.Color
@@ -127,14 +131,21 @@ func (p Painter) HunkHeader(h Header, gutter, width int) string {
 	base := background(lipgloss.NewStyle(), h.Fill)
 	accent := base.Foreground(p.Theme.Accent)
 
+	// The marker takes the text's colour rather than Accent. It is part of what
+	// the heading says about itself, and a lit caret on a dimmed line reads odd.
+	text := accent
+	if h.TextColor != nil {
+		text = base.Foreground(h.TextColor)
+	}
+
 	badge := accent
 	if h.BadgeColor != nil {
 		badge = base.Foreground(h.BadgeColor)
 	}
 
 	row := base.Render(strings.Repeat(" ", markerColumn(gutter)-markerSlot)) +
-		slot(h.Badge, base, badge) + slot(h.Marker, base, accent) +
-		accent.Render(h.Text)
+		slot(h.Badge, base, badge) + slot(h.Marker, base, text) +
+		text.Render(h.Text)
 
 	if w := lipgloss.Width(row); w > width {
 		return Clip(row, width, base.Foreground(p.Theme.Subtle))
