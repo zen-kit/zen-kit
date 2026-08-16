@@ -40,15 +40,13 @@ type Theme struct {
 	Error   color.Color
 	Actor   color.Color
 
-	// Surfaces. A nil Background means "leave the terminal's own background
-	// alone", which is what keeps transparency working.
+	// Surfaces. A nil Background leaves the terminal's own showing, which keeps
+	// transparency working and makes every tint below read against an unknown.
 	Background         color.Color
 	SelectedBackground color.Color
 
-	// Diff surfaces. A changed line is read as a block, not a character at a
-	// time, and a marker column alone does not carry that. They are tints of
-	// Success and Error over the base rather than the colors themselves: a
-	// filled row at full strength buries the code sitting on it.
+	// Diff surfaces. They group a run of changed lines and nothing more, because
+	// the marker and the line number already say which way a line went.
 	AddedBackground   color.Color
 	RemovedBackground color.Color
 
@@ -82,9 +80,12 @@ func (t Theme) BorderMutedOrSubtle() color.Color {
 	return t.BorderSubtleOrBorder()
 }
 
-// RosePineMoon is the default. The text, semantic and border colors are Rosé
-// Pine Moon's own values. The two diff tints are not: the palette has no role
-// for a changed row, so they are mixed here.
+// rpBase is Rosé Pine Moon's own background, which the theme now carries rather
+// than leaving to whatever the terminal happens to be.
+var rpBase = lipgloss.Color("#232136")
+
+// RosePineMoon is the default. Its text, semantic and border colors are the
+// palette's own; the two diff tints are not, it having no role for a changed row.
 var RosePineMoon = Theme{
 	Name:               "rose-pine-moon",
 	Syntax:             "rose-pine-moon",
@@ -92,18 +93,20 @@ var RosePineMoon = Theme{
 	Accent:             lipgloss.Color("#c4a7e7"),
 	Subtle:             lipgloss.Color("#908caa"),
 	Muted:              lipgloss.Color("#6e6a86"),
-	Inverted:           lipgloss.Color("#232136"),
+	Inverted:           rpBase,
 	Success:            lipgloss.Color("#9ccfd8"),
 	Warning:            lipgloss.Color("#f6c177"),
 	Error:              lipgloss.Color("#eb6f92"),
 	Actor:              lipgloss.Color("#ea9a97"),
-	Background:         nil,
+	Background:         rpBase,
 	SelectedBackground: lipgloss.Color("#2a283e"),
-	AddedBackground:    lipgloss.Color("#26383c"),
-	RemovedBackground:  lipgloss.Color("#3c2635"),
-	Border:             lipgloss.Color("#56526e"),
-	BorderSubtle:       lipgloss.Color("#44415a"),
-	BorderMuted:        lipgloss.Color("#393552"),
+
+	AddedBackground:   lipgloss.Color("#26383c"),
+	RemovedBackground: lipgloss.Color("#3c2635"),
+
+	Border:       lipgloss.Color("#56526e"),
+	BorderSubtle: lipgloss.Color("#44415a"),
+	BorderMuted:  lipgloss.Color("#393552"),
 }
 
 // Default names the theme used when config asks for one that doesn't exist.
