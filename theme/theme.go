@@ -40,8 +40,8 @@ type Theme struct {
 	Error   color.Color
 	Actor   color.Color
 
-	// Surfaces. A nil Background leaves the terminal's own showing, which keeps
-	// transparency working and makes every tint below read against an unknown.
+	// Surfaces. A nil Background keeps transparency working and leaves every tint
+	// below reading against an unknown. Both are true; the reader picks.
 	Background         color.Color
 	SelectedBackground color.Color
 
@@ -80,8 +80,8 @@ func (t Theme) BorderMutedOrSubtle() color.Color {
 	return t.BorderSubtleOrBorder()
 }
 
-// rpBase is Rosé Pine Moon's own background, which the theme now carries rather
-// than leaving to whatever the terminal happens to be.
+// rpBase is Rosé Pine Moon's own background. Inverted names it as the colour to
+// write on top of a filled surface; Background stays nil, so nothing paints it.
 var rpBase = lipgloss.Color("#232136")
 
 // RosePineMoon is the default. Its text, semantic and border colors are the
@@ -98,7 +98,7 @@ var RosePineMoon = Theme{
 	Warning:            lipgloss.Color("#f6c177"),
 	Error:              lipgloss.Color("#eb6f92"),
 	Actor:              lipgloss.Color("#ea9a97"),
-	Background:         rpBase,
+	Background:         nil,
 	SelectedBackground: lipgloss.Color("#2a283e"),
 
 	AddedBackground:   lipgloss.Color("#26383c"),
